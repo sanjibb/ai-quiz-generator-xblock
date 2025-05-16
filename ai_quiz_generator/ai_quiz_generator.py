@@ -1,5 +1,3 @@
-// ai_quiz_generator.py
-
 from xblock.fields import Float, Integer, Scope, String
 from xblock.core import XBlock
 from xblock.completable import CompletableXBlockMixin
