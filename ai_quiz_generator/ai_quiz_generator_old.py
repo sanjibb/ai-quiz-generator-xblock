@@ -1,5 +1,3 @@
-// ai_quiz_generator.py
-
 from xblock.fields import Float, Integer, Scope, String
 from xblock.core import XBlock
 from xblock.completable import CompletableXBlockMixin
@@ -24,27 +22,90 @@ except ModuleNotFoundError:
 log = logging.getLogger(__name__)
 def _(text): return text
 
+
 @XBlock.wants('i18n')
 class AIQuizGeneratorXBlock(XBlock, StudioEditableXBlockMixin, CompletableXBlockMixin):
-    display_name = String(display_name=_('Display Name'), default="AI Quiz Generator", scope=Scope.settings)
+    """
+    AI Quiz Generator XBlock - Generates multiple choice quiz questions using OpenAI models.
+    """
 
-    topic = String(display_name=_('Quiz Topic'), default='', scope=Scope.settings, multiline_editor=True)
-    generated_quiz = String(display_name=_('Generated Quiz'), default='', scope=Scope.user_state)
+    display_name = String(
+        display_name=_('Display Name'),
+        help=_('Display name for this module'),
+        default="AI Quiz Generator",
+        scope=Scope.settings
+    )
+
+    topic = String(
+        display_name=_('Quiz Topic'),
+        default='',
+        scope=Scope.settings,
+        multiline_editor=True,
+        help=_('Enter the topic or concept you want to generate a quiz about.'),
+    )
+
+    generated_quiz = String(
+        display_name=_('Generated Quiz'),
+        default='',
+        scope=Scope.user_state,
+        help=_('Stores the generated quiz from AI.')
+    )
 
     context = String(
         display_name=_('Prompt Template'),
-        default="""Generate {{num_quizzes}} multiple-choice questions on the topic below:\nTopic: {{topic}}\n\nFormat:\nQuestion:\nA.\nB.\nC.\nD.\nCorrect Answer:""",
+        default="""
+        Generate a multiple-choice question on the following topic:
+        Topic: {{topic}}
+        Format:
+        Question:
+        A.
+        B.
+        C.
+        D.
+        Correct Answer:
+        """,
         scope=Scope.settings,
-        multiline_editor=True
+        multiline_editor=True,
+        help=_("Prompt template with {{topic}} placeholder."),
     )
 
-    num_quizzes = Integer(display_name=_('Number of Quizzes'), default=1, scope=Scope.settings)
+    api_key = String(
+        display_name=_("API Key"),
+        default=getattr(settings, 'OPENAI_SECRET_KEY', ''),
+        scope=Scope.settings,
+        help=_("Your OpenAI API key.")
+    )
 
-    api_key = String(display_name=_("API Key"), default=getattr(settings, 'OPENAI_SECRET_KEY', ''), scope=Scope.settings)
-    model_name = String(display_name=_("AI Model Name"), default="gpt-4o", scope=Scope.settings)
-    temperature = Float(display_name=_('Temperature'), default=0.7, values={'min': 0.1, 'max': 2, 'step': 0.1}, scope=Scope.settings)
+    model_name = String(
+        display_name=_("AI Model Name"),
+        default="gpt-3.5-turbo", scope=Scope.settings,
+        help=_("AI model to use.")
+    )
 
-    editable_fields = ['display_name', 'context', 'topic', 'model_name', 'api_key', 'temperature', 'num_quizzes']
+    temperature = Float(
+        display_name=_('Temperature'),
+        default=0.7,
+        values={'min': 0.1, 'max': 2, 'step': 0.1},
+        scope=Scope.settings,
+        help=_('Controls randomness of output.')
+    )
+
+    description = String(
+        display_name=_('Description'),
+        default='Generate quiz questions using AI from a topic.',
+        scope=Scope.settings,
+        help=_('Optional description of this component.')
+    )
+
+    editable_fields = [
+        'display_name',
+        'context',
+        'topic',
+        'model_name',
+        'api_key',
+        'temperature',
+        'description'
+    ]
 
     def get_openai_client(self):
         try:
@@ -64,7 +125,6 @@ class AIQuizGeneratorXBlock(XBlock, StudioEditableXBlockMixin, CompletableXBlock
             'title': self.display_name,
             'topic': self.topic,
             'generated_quiz': self.generated_quiz,
-            'num_quizzes': self.num_quizzes
         }
 
     def render_template(self, template_path, context):
@@ -80,7 +140,7 @@ class AIQuizGeneratorXBlock(XBlock, StudioEditableXBlockMixin, CompletableXBlock
         frag.initialize_js('AIQuizGeneratorXBlock', json_args=self.get_context())
         return frag
 
-    def get_chat_completion(self, prompt='', model='gpt-4o', temperature=0.7, max_tokens=500):
+    def get_chat_completion(self, prompt='', model='gpt-3.5-turbo', temperature=0.7, max_tokens=300):
         client = self.get_openai_client()
         if client is None:
             return {'error': _('Unable to initialize OpenAI client.')}
@@ -95,66 +155,45 @@ class AIQuizGeneratorXBlock(XBlock, StudioEditableXBlockMixin, CompletableXBlock
             )
         except Exception as err:
             log.error(err)
-            return {'error': _('Unable to get quiz from AI.')}
+            return {'error': _('Unable to get quiz from AI. Check logs or API key.')}
 
         return {'response': response.choices[0].message.content}
 
     @XBlock.json_handler
     def generate_quiz(self, data, suffix=''):
-        topic = data.get('topic', '').strip()
-        num_quizzes = data.get('num_quizzes', self.num_quizzes)
+        if not data.get('topic'):
+            return {'error': _('Topic is required to generate a quiz.')}
 
-        if not topic:
-            return {'error': _('Topic is required.')}
-
-        prompt = self.context.replace('{{topic}}', f'"{topic}"').replace('{{num_quizzes}}', str(num_quizzes))
+        prompt = self.context.replace('{{topic}}', f'"{data["topic"]}"')
         result = self.get_chat_completion(prompt, self.model_name, self.temperature)
 
         if 'error' in result:
             return {'error': result['error']}
 
         self.generated_quiz = result['response']
-        return {'success': True, 'generated_quiz': self.generated_quiz}
-
-    @XBlock.json_handler
-    def confirm_quiz(self, data, suffix=''):
-        quiz = data.get("quiz", "").strip()
-        if not quiz:
-            return {'error': _('No quiz content to confirm.')}
-
-        try:
-            from xmodule.modulestore.django import modulestore
-            store = modulestore()
-            usage_key = self.scope_ids.usage_id
-            parent = store.get_parent(usage_key)
-
-            store.create_item(
-                user_id=None,
-                parent_location=parent.location,
-                block_type='problem',
-                fields={
-                    'display_name': 'AI Generated Quiz',
-                    'data': quiz
-                }
-            )
-
-            return {'success': True}
-        except Exception as e:
-            log.error(f"Failed to add quiz: {e}")
-            return {'error': _('Failed to add quiz to unit.')}
+        return {
+            'success': True,
+            'generated_quiz': self.generated_quiz
+        }
 
     @staticmethod
     def workbench_scenarios():
         return [
             ("AIQuizGeneratorXBlock", """<ai_quiz_generator/>"""),
-            ("Multiple Blocks", """<vertical_demo><ai_quiz_generator/><ai_quiz_generator/></vertical_demo>"""),
+            ("Multiple Blocks", """
+                <vertical_demo>
+                    <ai_quiz_generator/>
+                    <ai_quiz_generator/>
+                </vertical_demo>
+            """),
         ]
 
     def validate_field_data(self, validation, data):
         super().validate_field_data(validation, data)
         context = data.context.strip() if data.context else ""
-        if "{{topic}}" not in context:
-            validation.add(ValidationMessage(ValidationMessage.ERROR, "Prompt must include {{topic}}."))
-        if "{{num_quizzes}}" not in context:
-            validation.add(ValidationMessage(ValidationMessage.ERROR, "Prompt must include {{num_quizzes}}."))
 
+        if "{{topic}}" not in context:
+            validation.add(ValidationMessage(
+                ValidationMessage.ERROR,
+                "The prompt template must include the {{topic}} placeholder."
+            ))
