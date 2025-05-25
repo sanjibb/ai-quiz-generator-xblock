@@ -1,0 +1,30 @@
+{% load i18n %}
+<div class="ai_quiz_generator_block">
+  <h3 class="xblock-title">{{ title }}</h3>
+  <div class="ai_quiz_wrapper">
+    <div class="input-area">
+      <h5 class="container-text-title">{% trans 'Enter a topic to generate quiz questions:' %}</h5>
+      <textarea class="field question-input" id="quiz-topic" placeholder="{% trans 'e.g. Photosynthesis, Newton’s Laws' %}">{{ topic }}</textarea>
+
+      <label for="num-questions" class="container-text-title">{% trans 'Number of questions' %}</label>
+      <select id="num-questions">
+        {% for i in "12345"|make_list %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+      </select>
+
+      <div class="message message--hide">
+        <p class="message__title"></p>
+      </div>
+
+      <button class="btn btn-generate">{% trans 'Generate Quiz' %}</button>
+    </div>
+
+    <div class="quiz-output-container">
+      <h5 class="container-text-title">{% trans 'Generated Quiz:' %}</h5>
+      <div class="quiz-output" id="quiz-output">{{ generated_quiz }}</div>
+      <button class="btn btn-confirm d-none">{% trans 'Confirm and Add to Unit' %}</button>
+    </div>
+  </div>
+</div>
+

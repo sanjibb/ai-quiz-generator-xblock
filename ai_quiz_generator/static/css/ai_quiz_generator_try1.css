@@ -1,0 +1,95 @@
+.ai_quiz_generator_block {
+  font-family: "Open Sans", sans-serif;
+  margin-bottom: 2em;
+}
+
+.ai_quiz_generator_block .xblock-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+
+.ai_quiz_wrapper {
+  background: #f5f6f7;
+  padding: 1em;
+  border-radius: 4px;
+}
+
+.container-text-title {
+  font-weight: 600;
+  margin: 10px 0 5px;
+}
+
+textarea.question-input {
+  width: 100%;
+  min-height: 100px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-size: 14px;
+}
+
+select#num-questions {
+  margin-bottom: 10px;
+}
+
+.message {
+  margin-top: 10px;
+  padding: 10px;
+  border-left: 5px solid;
+  display: none;
+}
+
+.message.bg-success {
+  border-color: green;
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.message.bg-danger {
+  border-color: red;
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.message__title {
+  margin: 0;
+}
+
+.message--hide {
+  display: none;
+}
+
+button.btn-generate,
+button.btn-confirm {
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.btn-generate {
+  background: #0075b4;
+  color: white;
+  border: none;
+}
+
+button.btn-confirm {
+  margin-top: 1em;
+  background: #28a745;
+  color: white;
+  border: none;
+}
+
+button.btn-confirm.d-none {
+  display: none;
+}
+
+.quiz-output {
+  margin-top: 1em;
+  white-space: pre-wrap;
+  background: white;
+  padding: 1em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
