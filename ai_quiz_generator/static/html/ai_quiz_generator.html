@@ -2,12 +2,12 @@
 
 <div class="ai_quiz_generator_block">
   <h3 class="xblock-title">{{ title }}</h3>
+
   <div class="ai_quiz_wrapper">
-    
     <!-- Input Area -->
     <div class="input-area">
-      <h5 class="container-text-title">{% trans 'Enter a topic to generate a quiz question:' %}</h5>
-      <textarea class="field question-input" id="quiz-topic" placeholder="{% trans 'e.g. Newton’s Second Law, Photosynthesis, Pythagorean Theorem...' %}">{{ topic }}</textarea>
+      <h5 class="container-text-title">{% trans 'Enter a prompt to generate a quiz:' %}</h5>
+      <textarea class="field question-input" id="quiz-topic" placeholder="{% trans 'e.g. Generate 5 AP-style questions on Newton’s Laws...' %}">{{ topic }}</textarea>
 
       <div class="message message--hide">
         <p class="message__title"></p>
@@ -18,11 +18,16 @@
 
     <!-- Output Area -->
     <div class="quiz-output-container">
-      <h5 class="container-text-title">{% trans 'Generated Quiz:' %}</h5>
-      <div class="quiz-output" id="quiz-output">
-        {{ generated_quiz }}
-      </div>
+      <h5 class="container-text-title">{% trans 'Generated Quiz (Editable):' %}</h5>
+      <textarea id="quiz-editor" rows="15" style="width: 100%;">{{ generated_quiz }}</textarea>
+
+      <br><br>
+      <button id="submit-to-unit" class="btn btn-primary">{% trans 'Submit to Unit' %}</button>
+      <button id="download-tarball" class="btn btn-secondary" style="margin-left: 10px;">
+        {% trans 'Download as .tar.gz' %}
+      </button>
+
+      <div id="submission-status" style="margin-top: 10px; font-weight: bold;"></div>
     </div>
   </div>
 </div>
-
