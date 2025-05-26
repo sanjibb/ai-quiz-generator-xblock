@@ -40,13 +40,18 @@ class AIQuizGeneratorXBlock(XBlock, StudioEditableXBlockMixin, CompletableXBlock
     temperature = Float(display_name=_('Temperature'), default=0.7, values={'min': 0.1, 'max': 2, 'step': 0.1}, scope=Scope.settings)
     description = String(display_name=_('Description'), default='Generate quiz questions using AI from a topic.', scope=Scope.settings)
     generated_quiz = String(display_name=_('Generated Quiz'), default='', scope=Scope.user_state)
-
+    api_key = String(
+        display_name=_("API Key"),
+        default=getattr(settings, 'OPENAI_SECRET_KEY', ''),
+        scope=Scope.settings,
+        help=_("Your OpenAI API key.")
+    )
     editable_fields = ['display_name', 'context', 'topic', 'model_name', 'api_key', 'temperature', 'description']
 
     def get_openai_client(self):
-        API_KEY=''
+        #API_KEY=''
         try:
-            return OpenAI(api_key=API_KEY)
+            return OpenAI(api_key=self.api_key)
         except Exception:
             return {'error': _('Failed to initialize OpenAI client')}
 
